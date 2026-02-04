@@ -10,10 +10,12 @@ Your FastAPI application is now running with a Python virtual environment.
 
 ```
 api/
-├── venv/                    # Virtual environment (do not commit)
-├── main.py                  # FastAPI application
-├── free_slots_finder.py     # Core logic for finding free slots
-├── requirements.txt         # Python dependencies
+├── venv/                      # Virtual environment (do not commit)
+├── main.py                    # FastAPI application
+├── free_slots_finder.py       # Core logic for finding free slots
+├── task_data_generator.py     # Generate test data with start/end times
+├── task_generator.py          # Generate tasks with deadlines only
+├── requirements.txt           # Python dependencies
 └── ...
 ```
 
@@ -196,6 +198,55 @@ To change, edit `free_slots_finder.py`:
 ```python
 WORK_START_HOUR = 8  # 8 AM
 WORK_END_HOUR = 18   # 6 PM
+```
+
+---
+
+## 📝 Task Data Generator
+
+Generate realistic test data with configurable number of tasks:
+
+```bash
+# Activate virtual environment first
+source venv/bin/activate
+
+# Generate 50 tasks for February 2026
+python task_data_generator.py 50 2026-02-01 30 tasks_with_times.json
+
+# Quick examples:
+python task_data_generator.py 100              # 100 tasks, defaults for other params
+python task_data_generator.py 50 2026-03-01    # 50 tasks starting March 2026
+python task_data_generator.py 20 2026-02-01 7  # 20 tasks over 7 days
+```
+
+### Parameters:
+
+1. **num_tasks** (required): Number of tasks to generate
+2. **start_date** (optional): Start date in `YYYY-MM-DD` format (default: `2026-02-01`)
+3. **days_range** (optional): Number of days to spread tasks across (default: `30`)
+4. **output_file** (optional): Output JSON file name (default: `tasks_with_times.json`)
+
+### Features:
+
+- ✅ Generates tasks with realistic start/end times during working hours (6 AM - 8 PM)
+- ✅ Avoids overlapping tasks on the same day when possible
+- ✅ Random durations: 30 minutes to 4 hours
+- ✅ Includes optional fields: description, priority, deadline, status
+- ✅ Uses 30+ predefined task templates
+- ✅ Outputs JSON compatible with the free slots finder
+- ✅ Tasks sorted by start time
+- ✅ Shows statistics after generation
+
+### Test Generated Data:
+
+```bash
+# Generate test data
+python task_data_generator.py 30
+
+# Test with the API
+curl -X POST http://localhost:8000/free-slots \
+  -H "Content-Type: application/json" \
+  -d @tasks_with_times.json
 ```
 
 ---
