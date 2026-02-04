@@ -44,6 +44,35 @@ export const createUserTask = async (req, res) => {
   }
 }
 
+export const createBulkUserTasks = async (req, res) => {
+  try {
+    console.log("🔵 CREATE BULK USER TASKS ENDPOINT HIT");
+    console.log("📥 req.user.userId:", req.user?.userId);
+    console.log("📥 Request body:", req.body);
+
+    if (!Array.isArray(req.body) || req.body.length === 0) {
+      return res.status(400).json({ message: "Request body must be a non-empty array of tasks" });
+    }
+
+    const userId = new mongoose.Types.ObjectId(req.user.userId);
+
+    // Attach user to each task and avoid mutating incoming objects
+    const tasksToInsert = req.body.map((task) => ({
+      ...task,
+      user: userId,
+    }));
+
+    // Insert many tasks for the authenticated user
+    const insertedTasks = await Task.insertMany(tasksToInsert);
+
+    res.status(201).json(insertedTasks);
+    console.log("✅ Created bulk user tasks. Count:", insertedTasks.length);
+  } catch (error) {
+    console.error("❌ Error creating bulk user tasks:", error);
+    res.status(400).json({ message: error.message });
+  }
+};
+
 export const getTasksByUser = async (req, res) => {
   try {
     console.log("🔵 GET TASKS BY USER ENDPOINT HIT");
@@ -84,6 +113,51 @@ export const deleteTasksByUser = async (req, res) => {
     console.log("✅ Deleted", result.deletedCount, "tasks for user:", req.user.userId);
   } catch (error) {
     console.error("❌ Error deleting tasks for user:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// Delete all tasks of a user in a specific month
+export const deleteUserTasksByMonth = async (req, res) => {
+  try {
+    console.log("🔵 DELETE USER TASKS BY MONTH ENDPOINT HIT");
+    console.log("📥 req.user.userId:", req.user.userId);
+    console.log("📥 Year:", req.params.year);
+    console.log("📥 Month:", req.params.month);
+    
+    const userId = new mongoose.Types.ObjectId(req.user.userId);
+    const year = parseInt(req.params.year);
+    const month = parseInt(req.params.month); // 1-12
+    
+    // Validate year and month
+    if (isNaN(year) || isNaN(month) || month < 1 || month > 12) {
+      return res.status(400).json({ message: "Invalid year or month. Month must be between 1 and 12." });
+    }
+    
+    // Create date range for the specified month
+    const startDate = new Date(year, month - 1, 1); // month - 1 because JS months are 0-indexed
+    const endDate = new Date(year, month, 0, 23, 59, 59, 999); // Last day of the month
+    
+    console.log("📅 Date range:", { startDate, endDate });
+    
+    // Delete tasks where deadline is within the specified month
+    const result = await Task.deleteMany({
+      user: userId,
+      deadline: {
+        $gte: startDate,
+        $lte: endDate
+      }
+    });
+    
+    res.status(200).json({ 
+      message: `${result.deletedCount} tasks deleted for ${year}-${month.toString().padStart(2, '0')}`,
+      deletedCount: result.deletedCount,
+      month: month,
+      year: year
+    });
+    console.log("✅ Deleted", result.deletedCount, "tasks for user:", req.user.userId, "in", year, "-", month);
+  } catch (error) {
+    console.error("❌ Error deleting tasks by month:", error);
     res.status(500).json({ message: error.message });
   }
 };

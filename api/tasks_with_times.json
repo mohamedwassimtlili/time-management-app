@@ -1,0 +1,47 @@
+[
+  {
+    "title": "Create API documentation",
+    "description": "Document all REST endpoints with request/response examples",
+    "priority": 1,
+    "start": "2026-02-20T09:08:00Z",
+    "end": "2026-02-20T10:00:00Z",
+    "deadline": "2026-02-02T17:00:00Z",
+    "status": "in progress"
+  },
+  {
+    "title": "Setup project environment", 
+    "description": "Configure development environment",
+    "priority": 0,
+    "start": "2026-02-20T10:15:00Z",
+    "end": "2026-02-20T11:30:00Z",
+    "deadline": "2026-02-02T09:00:00Z",
+    "status": "done"
+  },
+  {
+    "title": "Review project requirements",
+    "description": "Read and analyze specifications",
+    "priority": 0,
+    "start": "2026-02-20T14:00:00Z",
+    "end": "2026-02-20T15:30:00Z",
+    "deadline": "2026-02-03T10:00:00Z",
+    "status": "done"
+  },
+  {
+    "title": "Team Meeting",
+    "description": "Weekly sync",
+    "priority": 0,
+    "start": "2026-02-22T09:00:00Z",
+    "end": "2026-02-22T12:00:00Z",
+    "deadline": "2026-02-22T12:00:00Z",
+    "status": "pending"
+  },
+  {
+    "title": "Code Review",
+    "description": "Review PRs",
+    "priority": 1,
+    "start": "2026-02-22T13:00:00Z",
+    "end": "2026-02-22T14:00:00Z",
+    "deadline": "2026-02-22T14:00:00Z",
+    "status": "pending"
+  }
+]

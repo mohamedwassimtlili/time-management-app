@@ -11,7 +11,9 @@ import {
   deleteUserTask,
   DeleteAll,
   getTasksByUser,
-  updateUserTask
+  updateUserTask,
+  createBulkUserTasks,
+  deleteUserTasksByMonth
 } from "../controllers/task.controller.js";
 import { protect } from "../middlewares/auth.middleware.js";
 
@@ -23,21 +25,25 @@ router.use((req, res, next) => {
   next();
 });
 
-router.post("/", createTask);
-router.post("/bulk", createBulkTasks);
+// POST routes - specific paths first
+router.post("/user/bulk", protect, createBulkUserTasks);
 router.post("/user", protect, createUserTask);
+router.post("/bulk", createBulkTasks);
+router.post("/", createTask);
 
-
-router.get("/", getTasks);
+// GET routes - specific paths first
 router.get("/user", protect, getTasksByUser);
 router.get("/:id", getTaskById);
+router.get("/", getTasks);
 
+// PATCH routes - specific paths first
 router.patch("/user", protect, updateUserTask);
 router.patch("/:id", updateTask);
 
-
-router.delete("/", DeleteAll);
+// DELETE routes - specific paths first
+router.delete("/user/month/:year/:month", protect, deleteUserTasksByMonth);
 router.delete("/user", protect, deleteUserTask);
 router.delete("/:id", deleteTask);
+router.delete("/", DeleteAll);
 
 export default router;
