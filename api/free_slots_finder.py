@@ -247,6 +247,8 @@ if __name__ == "__main__":
 
 
 
+
+
     
     print("="*60)
     print("FREE TIME SLOT FINDER - TEST")
@@ -267,3 +269,49 @@ if __name__ == "__main__":
     print("\n📅 Simple Format Output:")
     simple_format = format_output_simple(free_slots)
     print(json.dumps(simple_format, indent=2))
+
+import json
+
+def generate_planning_prompt(tasks: list, project_desc: str) -> str:
+    free_slots = find_free_slots_from_list(tasks)
+    simple_slots = format_output_simple(free_slots)
+
+    prompt = f"""
+You are an expert productivity assistant.
+
+The user has a calendar with existing tasks.
+Divide the project into smaller subtasks that fit ONLY in the free time slots.
+
+Project description:
+{project_desc}
+
+Existing tasks:
+{json.dumps(tasks, indent=2)}
+
+Available free slots:
+{json.dumps(simple_slots, indent=2)}
+
+IMPORTANT:
+Return your output in the following format:
+
+PLAN
+1. Title: ...
+   Description: ...
+   Start: ...
+   End: ...
+   Priority: ...
+   Status: ...
+
+2. Title: ...
+   Description: ...
+   ...
+
+EXPLANATION
+<short paragraph explaining why this plan works>
+"""
+    return prompt
+
+
+
+
+    

@@ -1,4 +1,1 @@
-{
-  "error": "Invalid JSON",
-  "raw": "```json\n[\n  {\n    \"date\": \"2026-02 end times are beyond the knowledge cutoff date, which is my last update in early 2023. However, I can still create a JSON structure based on free time slots given for an imaginary future scenario or if you meant past dates before my knowledge cutoff, please adjust accordingly:\n\n```json\n[\n  {\n    \"date\": \"2024-01-15\", // Example date within the last known data range. Replace with actual free time slots as needed for your context.\n    \"slots\": [\n      {\"start\": \"06:00\", \"end\": \"06:30\", \"suggested_tasks\": [\"Morning exercise\"]},\n      {\"start\": \"07:00\", \"end\": \"12:00\", \"suggested_tasks\": [\"Work on project report\", \"Team meeting with HR manager\"]},\n      {\"start\": \"13:00\", \"end\": \"14:00\", \"suggested_tasks\": [\"Lunch and relaxation break\"]},\n      {\"start\": \"14:30\", \"end\": \"16:00\", \"suggested09-28T17:00Z\"],\n    ]\n  }\n]\n```"
-}
+[]
