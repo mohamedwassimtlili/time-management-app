@@ -9,7 +9,7 @@ const taskSchema = new mongoose.Schema({
     },
   title: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
   },
   description: {
@@ -22,6 +22,15 @@ const taskSchema = new mongoose.Schema({
   },
   deadline: {
     type: Date, // includes date + time
+  },
+  estimation: {
+    type: Number, // duration in minutes
+    required: true,
+    min: 0,
+  },
+  collectionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Collection",
   },
   status: {
     type: String,
@@ -40,4 +49,5 @@ const taskSchema = new mongoose.Schema({
 });
 
 export default mongoose.model("Task", taskSchema);
+
 

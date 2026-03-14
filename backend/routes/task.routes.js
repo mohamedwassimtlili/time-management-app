@@ -28,8 +28,8 @@ router.use((req, res, next) => {
 // POST routes - specific paths first
 router.post("/user/bulk", protect, createBulkUserTasks);
 router.post("/user", protect, createUserTask);
-router.post("/bulk", createBulkTasks);
-router.post("/", createTask);
+router.post("/bulk", protect,createBulkTasks);
+router.post("/", protect,createTask);
 
 // GET routes - specific paths first
 router.get("/user", protect, getTasksByUser);

@@ -11,7 +11,7 @@ import userRoutes from "./routes/user.routes.js";
 dotenv.config();
 
 const app = express();
-
+  
 // Middlewares
 const PORT = process.env.PORT || 5000;  // use Render's assigned port
 

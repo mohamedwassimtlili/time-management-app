@@ -7,7 +7,14 @@ export const createTask = async (req, res) => {
   console.log("📥 Request body:", req.body);
   console.log("📥 Request headers:", req.headers);
   try {
-    const task = new Task(req.body); // id is auto-generated
+    const taskData = { ...req.body };
+    // If the request has executed the auth middleware, attach user ID
+    if (req.user && req.user.userId) {
+      taskData.user = req.user.userId;
+      console.log("msg:::::::::::::",req.user.userId)
+    }
+
+    const task = new Task(taskData); // id is auto-generated
     console.log("🟡 Task object created:", task);
     await task.save();
     console.log("✅ Created task:", task);
@@ -237,8 +244,20 @@ export const deleteTask = async (req, res) => {
 
 // routes/taskRoutes.js
 export const createBulkTasks = async (req, res) => {
-  try {
-    const tasks = await Task.insertMany(req.body);
+  try { 
+    let tasksToCreate = req.body;
+
+    // If request is authenticated, attach user ID to all tasks
+    if (req.user && req.user.userId) {
+      if (Array.isArray(tasksToCreate)) {
+        tasksToCreate = tasksToCreate.map(task => ({
+          ...task,
+          user: req.user.userId
+        }));
+      }
+    }
+
+    const tasks = await Task.insertMany(tasksToCreate);
     res.status(201).json(tasks);
     console.log("✅ Created bulk tasks:");
   } catch (err) {
