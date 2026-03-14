@@ -7,18 +7,20 @@ import Login from "./components/Login";
 import AllTasks from "./components/AllTasks";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Home from "./components/Home"; // Add this line
+
 function App() {
   return (
     <AuthProvider>
       <Router>
       <Routes>
-        <Route path="/" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+        <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} /> {/* Change this */}
         <Route path="/signup" element={<Signup />} />
         <Route path="/login" element={<Login />} />
         <Route path="/all-tasks" element={<ProtectedRoute><AllTasks /></ProtectedRoute>} />
         { /* the old calendar view  */ }
-        <Route path="/calendar-view" element={<CalendarView />} />
-        
+        <Route path="/calendar-view" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
+        <Route path="/collections/:collectionId" element={<ProtectedRoute><AllTasks/></ProtectedRoute>} /> {/* Add new route */}
       </Routes>
     </Router>
     </AuthProvider>

@@ -97,20 +97,15 @@ export default function DayControl({ open, onClose, selectedDate }) {
             Authorization: `Bearer ${token}`
           }
         });
-                console.log("Response from update:", res);
+        console.log("Response from update:", res);
 
       } else {
-        console.log("token:", token);
         const newTask = {
           ...taskData,
-          deadline: taskData.deadline || selectedDate,
-          user: user._id
+          deadline: taskData.deadline || selectedDate, 
         };
-        await api.post("/tasks/user", newTask, {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
+        // The token is automatically handled by the api interceptor in src/services/api.js
+        await api.post("/tasks/user", newTask); 
       }
       setShowForm(false);
       setEditTask(null);

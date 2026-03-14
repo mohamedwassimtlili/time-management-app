@@ -32,7 +32,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { api } from "../services/api";
 import TaskForm from "./TaskForm";
 import { useAuth } from "../context/AuthContext";
@@ -145,7 +145,19 @@ function SortableTaskCard({ task, onEdit, onDelete }) {
                   fontSize: { xs: '11px', sm: '12px' }
                 }}
               >
-                Due: {new Date(task.deadline).toLocaleString()}
+                Due: {new Date(task.deadline).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}
+              </Typography>
+            )}
+            {task.estimation > 0 && (
+              <Typography 
+                variant="caption" 
+                color="text.secondary"
+                sx={{ 
+                  display: 'block',
+                  fontSize: { xs: '11px', sm: '12px' }
+                }}
+              >
+                Est: {task.estimation} min
               </Typography>
             )}
           </Box>
@@ -195,6 +207,7 @@ function SortableTaskCard({ task, onEdit, onDelete }) {
 // Main AllTasks Component
 export default function AllTasks() {
   const navigate = useNavigate();
+  const { collectionId } = useParams(); // Get collectionId from URL params
   const { user, token } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -248,13 +261,25 @@ export default function AllTasks() {
 
   const fetchTasks = async () => {
     try {
-      const res = await api.get("/tasks/user", {
+      let url = "/tasks";
+      if (collectionId) {
+        // If viewing a specific collection, filter tasks. 
+        // Note: Backend might need a query param or a specific route like /collections/:id/tasks
+        // For now assuming filtering on client or a query param
+        // If you updated backend to support query params: url = `/tasks?collectionId=${collectionId}`
+        // Or if you want to filter client side:
+      }
+      const res = await api.get(url, {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-      const data = Array.isArray(res.data) ? res.data : [];
-      const sortedTasks = data.sort((a, b) => a.priority - b.priority);
+      
+      let fetchedTasks = res.data;
+      if (collectionId) {
+        fetchedTasks = fetchedTasks.filter(t => t.collectionId === collectionId);
+      }
+      const sortedTasks = fetchedTasks.sort((a, b) => a.priority - b.priority);
       setTasks(sortedTasks);
     } catch (err) {
       console.error("Error fetching tasks:", err);
@@ -294,6 +319,9 @@ export default function AllTasks() {
           ...taskData,
           user: user._id
         };
+        if (collectionId) {
+          newTask.collectionId = collectionId;
+        }
         await api.post("/tasks/user", newTask, {
           headers: {
             Authorization: `Bearer ${token}`
@@ -485,7 +513,7 @@ export default function AllTasks() {
           {showForm && (
             <Card sx={{ mb: 3 }}>
               <CardContent>
-                <TaskForm
+                <TaskForm 
                   initialData={editTask}
                   onSave={handleSave}
                   onCancel={() => {

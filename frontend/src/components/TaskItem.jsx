@@ -1,6 +1,6 @@
 // src/components/TaskItem.jsx
 import React from "react";
-import { ListItem, ListItemText, IconButton } from "@mui/material";
+import { ListItem, ListItemText, IconButton, ListItemSecondaryAction, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
@@ -21,6 +21,7 @@ export default function TaskItem({ task, onEdit, onDelete }) {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
+    position: 'relative' // helper for dragging
   };
 
   return (
@@ -31,6 +32,11 @@ export default function TaskItem({ task, onEdit, onDelete }) {
         bgcolor: 'background.paper',
         mb: 1,
         borderRadius: 1,
+        border: '1px solid',
+        borderColor: 'divider',
+        display: 'flex',
+        alignItems: 'center',
+        paddingRight: 12, // Make info for action buttons
         '&:hover': {
           bgcolor: 'action.hover',
         }
@@ -47,18 +53,31 @@ export default function TaskItem({ task, onEdit, onDelete }) {
         }}
         size="small"
       >
-        <DragIndicatorIcon />
+        <DragIndicatorIcon fontSize="small" />
       </IconButton>
+      
       <ListItemText
-        primary={task.title}
-        secondary={new Date(task.deadline).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+        primary={
+            <Typography variant="subtitle1" component="div" sx={{ fontWeight: 500, lineHeight: 1.2 }}>
+                {task.title}
+            </Typography>
+        }
+        secondary={
+            <Typography variant="caption" color="text.secondary">
+                {task.deadline ? new Date(task.deadline).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : 'No time'}
+            </Typography>
+        }
+        sx={{ my: 0 }}
       />
-      <IconButton edge="end" aria-label="edit" onClick={onEdit} sx={{ ml: 1 }}>
-        <EditIcon />
+
+      <ListItemSecondaryAction>
+      <IconButton edge="end" aria-label="edit" onClick={onEdit} sx={{ mr: 1 }}>
+        <EditIcon fontSize="small"/>
       </IconButton>
       <IconButton edge="end" aria-label="delete" onClick={onDelete}>
-        <DeleteIcon />
+        <DeleteIcon fontSize="small"/>
       </IconButton>
+      </ListItemSecondaryAction>
     </ListItem>
   );
 }

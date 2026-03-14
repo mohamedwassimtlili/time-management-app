@@ -1,11 +1,10 @@
 // src/components/CalendarView.jsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import { api } from "../services/api";
 import DayControl from "./DayControl";
-import axios from "axios";
 import { AuthContext } from "../context/AuthContext";
 
 //localizer setup to enable date formatting in the calendar
@@ -18,31 +17,30 @@ export default function CalendarView() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState("month"); // default view
   const { user } = useContext(AuthContext);
-  const [userState, setUserState] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null); // ← State to control DayControl drawer
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // ← UseEffect & Fetch tasks when component mounts or drawer closes
   useEffect(() => {
-    fetchTasks();
+    fetchSessions(); // Changed to fetchSessions
   }, [drawerOpen]); //fetchTasks() is called every time drawerOpen changes.
 
-  const fetchTasks = async () => {
+  const fetchSessions = async () => {
     try {
-      const res = await api.get("/tasks");
+      const res = await api.get("/sessions"); // Changed endpoint to /sessions
       
-      
-
-      // Transform tasks into calendar events
-      const formatted = res.data.map((task) => ({
-        id: task._id,
-        title: task.title,
-        start: new Date(task.deadline),
-        end: new Date(task.deadline),
+      // Transform sessions into calendar events
+      const sessionList = Array.isArray(res.data) ? res.data : [];
+      const formatted = sessionList.map((session) => ({
+        id: session._id,
+        title: session.task ? session.task.title : "Untitled Session", // Access task title via population
+        start: new Date(session.startTime),
+        end: new Date(session.endTime),
+        status: session.status
       }));
       setEvents(formatted);
     } catch (err) {
-      console.error("Error fetching tasks CalendarView:", err);
+      console.error("Error fetching sessions CalendarView:", err);
     }
   };
 
@@ -52,9 +50,30 @@ export default function CalendarView() {
     setDrawerOpen(true);              // Open DayControl drawer
   };
 
+  const handleSelectEvent = (event) => {
+    setSelectedDate(event.start);
+    setDrawerOpen(true);
+  };
+
+  const eventPropGetter = (event) => {
+    let backgroundColor = "#3b82f6"; // Default blue
+    switch (event.status) {
+      case "done":
+        backgroundColor = "#10b981"; // Green
+        break;
+      case "in progress":
+        backgroundColor = "#f59e0b"; // Amber/Yellow
+        break;
+      case "pending":
+      default:
+        backgroundColor = "#3b82f6";
+        break;
+    }
+    return { style: { backgroundColor } };
+  };
+
   return (
     <>
-      {console.log("User in CalendarView:", user)}
       <div className="app-container">
         <h1>📅 My Agenda</h1>
         <div className="calendar-wrapper">
@@ -69,6 +88,8 @@ export default function CalendarView() {
             onView={(newView) => setView(newView)} // ← Update view state on view change
             selectable
             onSelectSlot={handleSelectSlot}  // ← Connect date click handler
+            onSelectEvent={handleSelectEvent}
+            eventPropGetter={eventPropGetter}
             style={{ height: "600px" }}
           />
         </div>

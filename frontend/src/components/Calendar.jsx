@@ -4,6 +4,7 @@ import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ListAltIcon from "@mui/icons-material/ListAlt";
+import DashboardIcon from "@mui/icons-material/Dashboard";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import CalendarView from "./CalendarView";
@@ -102,6 +103,17 @@ function Calendar() {
           gap: 1,
           flexDirection: { xs: 'column', sm: 'row' }
         }}>
+          <Button
+            onClick={() => navigate("/")}
+            startIcon={<DashboardIcon />}
+            variant="outlined"
+            sx={{
+              bgcolor: 'background.paper',
+              minHeight: 44,
+            }}
+          >
+            Dashboard
+          </Button>
           <Button
             onClick={handleLogout}
             startIcon={<LogoutIcon />}

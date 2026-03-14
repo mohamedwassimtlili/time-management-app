@@ -7,6 +7,8 @@ import dotenv from "dotenv";
 import taskRoutes from "./routes/task.routes.js";
 import dayRoutes from "./routes/days.routes.js";  
 import userRoutes from "./routes/user.routes.js"; 
+import sessionRoutes from "./routes/session.routes.js";
+import collectionRoutes from "./routes/collection.routes.js";
 
 dotenv.config();
 
@@ -22,6 +24,9 @@ app.use(express.json()); // Allows parsing JSON in request body
 app.use("/api/tasks", taskRoutes); // All routes start with /api/tasks
 app.use("/api/days", dayRoutes);   // All routes start with /api/days
 app.use("/api/users", userRoutes); // All routes start with /api/users
+app.use("/api/sessions", sessionRoutes); // Register session routes
+app.use("/api/collections", collectionRoutes); // Register collection routes
+
 // Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI)

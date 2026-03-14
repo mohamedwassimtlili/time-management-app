@@ -1,7 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from typing import List, Dict
-import httpx
 import uuid
 
 from free_slots_finder import generate_planning_prompt

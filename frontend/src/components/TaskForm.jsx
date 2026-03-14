@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Box, TextField, Button } from "@mui/material";
 import { Select, MenuItem } from "@mui/material";
+import { api } from "../services/api"; // Corrected import to use named export
 
 export default function TaskForm({ initialData = null, onSave, onCancel }) {
   const [title, setTitle] = useState("");
@@ -10,8 +11,22 @@ export default function TaskForm({ initialData = null, onSave, onCancel }) {
   const [priority, setPriority] = useState(0);
   const [deadline, setDeadline] = useState("");
   const [status, setStatus] = useState("pending");
+  const [estimation, setEstimation] = useState(0); // Added estimation
+  const [collectionId, setCollectionId] = useState(""); // Added collectionId
+  const [collections, setCollections] = useState([]); // List of collections for dropdown
+
   useEffect(() => {
-    
+    // Fetch collections for dropdown
+    const fetchCollections = async () => {
+        try {
+            const res = await api.get("/collections");
+            setCollections(res.data);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+    fetchCollections();
+
     if (initialData) {
     setTitle(initialData.title || "");
     setNotes(initialData.notes || "");
@@ -22,6 +37,8 @@ export default function TaskForm({ initialData = null, onSave, onCancel }) {
     setDeadline(localDeadline);
     setStatus(initialData.status || "pending");
     setDescription(initialData.description || "");
+    setEstimation(initialData.estimation || 0); // Set estimation
+    setCollectionId(initialData.collectionId || ""); // Set collectionId
   } else {
     setTitle("");
     setNotes("");
@@ -29,6 +46,8 @@ export default function TaskForm({ initialData = null, onSave, onCancel }) {
     setDeadline("");
     setStatus("pending");
     setDescription("");
+    setEstimation(0);
+    setCollectionId("");
   }
   }, [initialData]);
 
@@ -43,6 +62,8 @@ export default function TaskForm({ initialData = null, onSave, onCancel }) {
     deadline,
     status,
     description,
+    estimation, // Include estimation
+    collectionId: collectionId || null, // Include collectionId
   });
 };
 
@@ -86,6 +107,29 @@ export default function TaskForm({ initialData = null, onSave, onCancel }) {
           }
         }}
       />
+      <TextField 
+        label="Estimation (minutes)" 
+        type="number"
+        value={estimation} 
+        onChange={(e) => setEstimation(Number(e.target.value))} 
+        fullWidth
+        size="medium"
+        inputProps={{ min: 0 }}
+      />
+      <Select
+        value={collectionId}
+        displayEmpty
+        onChange={(e) => setCollectionId(e.target.value)}
+        fullWidth
+        size="medium"
+      >
+        <MenuItem value="">
+            <em>None</em>
+        </MenuItem>
+        {collections.map((col) => (
+            <MenuItem key={col._id} value={col._id}>{col.name}</MenuItem>
+        ))}
+      </Select>
       <TextField 
         label="Priority" 
         value={priority} 
