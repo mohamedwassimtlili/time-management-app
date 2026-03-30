@@ -245,19 +245,8 @@ export const deleteTask = async (req, res) => {
 // routes/taskRoutes.js
 export const createBulkTasks = async (req, res) => {
   try { 
-    let tasksToCreate = req.body;
-
-    // If request is authenticated, attach user ID to all tasks
-    if (req.user && req.user.userId) {
-      if (Array.isArray(tasksToCreate)) {
-        tasksToCreate = tasksToCreate.map(task => ({
-          ...task,
-          user: req.user.userId
-        }));
-      }
-    }
-
-    const tasks = await Task.insertMany(tasksToCreate);
+    
+    const tasks = await Task.insertMany(req.body);
     res.status(201).json(tasks);
     console.log("✅ Created bulk tasks:");
   } catch (err) {

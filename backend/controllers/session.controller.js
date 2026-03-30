@@ -1,92 +1,74 @@
-import Session from "../models/session.js";
-import Task from "../models/task.model.js";
+import Session from "../models/session.model.js";
 
-// Create a new session
+// Create a single session
 export const createSession = async (req, res) => {
   try {
-    const { taskId, startTime, endTime, status } = req.body;
-    
-    // Check if task exists and belongs to user
-    const task = await Task.findOne({ _id: taskId, user: req.user.userId });
-    if (!task) {
-      return res.status(404).json({ message: "Task not found." });
-    }
+    const { task, user, startTime, endTime, status } = req.body;
 
-    const session = new Session({
-      task: taskId,
-      user: req.user.userId,
-      startTime,
-      endTime,
-      status
-    });
-
+    const session = new Session({ task, user, startTime, endTime, status });
     await session.save();
     res.status(201).json(session);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
-// Get all sessions for the authenticated user
+// Bulk create sessions
+export const createSessions = async (req, res) => {
+  try {
+    const sessions = req.body; // expects an array of session objects
+
+    if (!Array.isArray(sessions) || sessions.length === 0) {
+      return res.status(400).json({ message: "Provide a non-empty array of sessions" });
+    }
+
+    const created = await Session.insertMany(sessions, { ordered: false });
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(400).json({ message: err.message });
+  }
+};
+
+// Get all sessions (optionally filter by ?task=<id> or ?user=<id>)
 export const getSessions = async (req, res) => {
   try {
-    const sessions = await Session.find({ user: req.user.userId })
-      .populate('task', 'title description priority collectionId') // Populate task details
-      .sort({ startTime: 1 });
+    const filter = {};
+    if (req.query.task) filter.task = req.query.task;
+    if (req.query.user) filter.user = req.query.user;
+
+    const sessions = await Session.find(filter)
+      .populate("task")
+      .populate("user");
     res.status(200).json(sessions);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
 
 // Update a session
 export const updateSession = async (req, res) => {
   try {
-    const { id } = req.params;
-    const session = await Session.findOneAndUpdate(
-      { _id: id, user: req.user.userId },
-      req.body,
-      { new: true }
+    const session = await Session.findByIdAndUpdate(
+      req.params.id,
+      { $set: req.body },
+      { new: true, runValidators: true }
     );
-    if (!session) {
-      return res.status(404).json({ message: "Session not found." });
-    }
+
+    if (!session) return res.status(404).json({ message: "Session not found" });
     res.status(200).json(session);
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+  } catch (err) {
+    res.status(400).json({ message: err.message });
   }
 };
 
 // Delete a session
 export const deleteSession = async (req, res) => {
   try {
-    const { id } = req.params;
-    const session = await Session.findOneAndDelete({ _id: id, user: req.user.userId });
-    if (!session) {
-      return res.status(404).json({ message: "Session not found." });
-    }
-    res.status(200).json({ message: "Session deleted successfully." });
-  } catch (error) {
-    res.status(500).json({ message: error.message });
+    const session = await Session.findByIdAndDelete(req.params.id);
+
+    if (!session) return res.status(404).json({ message: "Session not found" });
+    res.status(200).json({ message: "Session deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
   }
 };
-
-// Bulk create sessions
-export const createSessions = async (req, res) => {
-    try {
-        const sessionsData = req.body;
-         if (!Array.isArray(sessionsData) || sessionsData.length === 0) {
-            return res.status(400).json({ message: "Request body must be a non-empty array of sessions" });
-        }
-        
-        const sessions = sessionsData.map(session => ({
-            ...session,
-            user: req.user.userId
-        }));
-
-        const createdSessions = await Session.insertMany(sessions);
-        res.status(201).json(createdSessions);
-    } catch (error) {
-        res.status(500).json({ message: error.message });
-    }
-}

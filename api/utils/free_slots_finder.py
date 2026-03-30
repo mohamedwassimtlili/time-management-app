@@ -10,6 +10,9 @@ from collections import defaultdict
 from typing import List, Dict, Any
 import sys
 
+from fastapi import  HTTPException
+
+
 # Working hours configuration
 WORK_START_HOUR = 6   # 06:00
 WORK_END_HOUR = 18    # 18:00 (6 PM)
@@ -272,46 +275,151 @@ if __name__ == "__main__":
 
 import json
 
-def generate_planning_prompt(tasks: list, project_desc: str) -> str:
+def generate_planning_prompt(tasks: list, project_desc: str,start_date :datetime ,end_date: datetime) -> str:
+    
+    
     free_slots = find_free_slots_from_list(tasks)
+    if not free_slots:
+        raise HTTPException(status_code=400, detail="No free slots available")
+
     simple_slots = format_output_simple(free_slots)
 
     prompt = f"""
 You are an expert productivity assistant.
 
-The user has a calendar with existing tasks.
-Divide the project into smaller subtasks that fit ONLY in the free time slots.
+Your job is to:
+1. Break the project into SMALL actionable tasks.
+2. Each task must follow the TASK schema.
+3. Schedule these tasks into sessions using ONLY the available free slots.
 
-Project description:
+---------------------
+PROJECT:
 {project_desc}
 
-Existing tasks:
+---------------------
+EXISTING TASKS (DO NOT MODIFY):
 {json.dumps(tasks, indent=2)}
 
-Available free slots:
+---------------------
+AVAILABLE FREE SLOTS:
 {json.dumps(simple_slots, indent=2)}
 
+---------------------
+TASK RULES:
+
+- Tasks must be small and actionable.
+- Each task must include:
+  - title
+  - description
+  - priority (0 = highest, 10 = lowest)
+  - estimation (in minutes)
+  - status = "pending"
+
+- DO NOT include:
+  - id
+  - user
+  - collectionId
+  - createdAt
+
+---------------------
+SESSION RULES:
+
+- Each session must:
+  - Fit entirely inside a free slot
+  - Have startTime and endTime
+  - Be linked to a task using a temporary field: task_index
+
+- A task can have multiple sessions
+- If a task is large → split into multiple sessions
+- Sessions must NOT overlap
+- Sessions must respect real time
+
+---------------------
+OUTPUT FORMAT (STRICT JSON ONLY):
+
+{{
+  "tasks": [
+    {{
+      "title": "...",
+      "description": "...",
+      "priority": 3,
+      "estimation": 90,
+      "status": "pending"
+    }}
+  ],
+  "sessions": [
+    {{
+      "task_index": 0,
+      "startTime": "2026-03-18T10:00:00",
+      "endTime": "2026-03-18T11:30:00",
+      "description": "..."
+    }}
+  ],
+  "explanation": "short explanation"
+}}
+
+---------------------
 IMPORTANT:
-Return your output in the following format:
 
-PLAN
-1. Title: ...
-   Description: ...
-   Start: ...
-   End: ...
-   Priority: ...
-   Status: ...
+- task_index refers to the index of the task in the tasks array
+- Return ONLY valid JSON
+- No text outside JSON
+- Respond ONLY with a valid JSON object. Do not include markdown, code fences, or any explanation outside the JSON.
 
-2. Title: ...
-   Description: ...
-   ...
-
-EXPLANATION
-<short paragraph explaining why this plan works>
 """
     return prompt
 
 
+import json
 
+def build_messages(prompt: str, current_plan: dict) -> list[dict]:
+    """
+    Build the messages array for plan modification.
+    - system: role + output format instructions
+    - user: current plan + modification request
+    """
+    plan_str = json.dumps(current_plan, indent=2)
 
-    
+    system_message = {
+        "role": "system",
+        "content": """You are an AI task planning assistant.
+Your job:
+- Modify the existing plan based on the user's request
+- Always preserve tasks and sessions that are not affected by the modification
+- Never invent new tasks unless explicitly asked
+- Return ONLY a valid JSON object — no markdown, no code fences, no extra text
+
+OUTPUT FORMAT:
+{
+  "tasks": [
+    {
+      "title": "...",
+      "description": "...",
+      "priority": 3,
+      "estimation": 90,
+      "status": "pending"
+    }
+  ],
+  "sessions": [
+    {
+      "task_index": 0,
+      "startTime": "2026-03-18T10:00:00",
+      "endTime": "2026-03-18T11:30:00",
+      "description": "..."
+    }
+  ],
+  "explanation": "short explanation of what was changed"
+}
+
+RULES:
+- task_index refers to the index in the tasks array
+- Keep all unmodified tasks and sessions intact
+- Return ONLY valid JSON"""
+    }
+
+    user_message = {
+        "role": "user",
+        "content": f"CURRENT PLAN:\n{plan_str}\n\nMODIFICATION REQUEST:\n{prompt}"
+    }
+
+    return [system_message, user_message]
