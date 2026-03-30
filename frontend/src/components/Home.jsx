@@ -9,7 +9,6 @@ const ACCENT = "#534AB7";
 const ACCENT_LIGHT = "#EEEDFE";
 const ACCENT_MID = "#CECBF6";
 
-// ─── Theme (matches AllTasks + Calendar pattern) ────────────────────────────────
 function buildTheme(mode) {
   return createTheme({
     palette: {
@@ -21,7 +20,6 @@ function buildTheme(mode) {
   });
 }
 
-// ─── Dynamic styles (all colors adapt to mode) ─────────────────────────────────
 function makeStyles(mode) {
   const dark = mode === "dark";
   const bg0   = dark ? "#0a0a0a" : "#f7f7f5";
@@ -38,6 +36,9 @@ function makeStyles(mode) {
   const doneBg  = dark ? "#0f2d1e" : "#eaf6ef";
   const doneBdr = dark ? "#1f5c3a" : "#b6dfc8";
   const doneTxt = dark ? "#4caf82" : "#2d8a56";
+  const delBg   = dark ? "#2d0f0f" : "#fef2f2";
+  const delBdr  = dark ? "#5c1f1f" : "#fecaca";
+  const delTxt  = dark ? "#f87171" : "#dc2626";
   const overlay = dark ? "rgba(0,0,0,0.6)" : "rgba(0,0,0,0.35)";
 
   return `
@@ -125,17 +126,17 @@ function makeStyles(mode) {
 .session-info{flex:1;}
 .session-title{font-size:14px;font-weight:500;margin:0 0 2px;color:${text1};}
 .session-sub{font-size:12px;color:${text2};margin:0;}
+.session-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .btn-done{
   width:30px;height:30px;border-radius:50%;background:${doneBg};border:0.5px solid ${doneBdr};
-  color:${doneTxt};display:flex;align-items:center;justify-content:center;cursor:pointer;
-  font-size:14px;flex-shrink:0;
+  color:${doneTxt};display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;
 }
-.btn-edit-sm{
-  font-size:12px;padding:5px 10px;border-radius:8px;border:0.5px solid ${bdr};
-  background:transparent;color:${text2};cursor:pointer;font-family:'DM Sans',sans-serif;
-  transition:border-color 0.15s;
+.btn-del-icon{
+  width:28px;height:28px;border-radius:8px;border:0.5px solid ${delBdr};
+  background:${delBg};color:${delTxt};display:flex;align-items:center;
+  justify-content:center;cursor:pointer;flex-shrink:0;transition:opacity 0.15s;
 }
-.btn-edit-sm:hover{border-color:${bdr2};}
+.btn-del-icon:hover{opacity:0.7;}
 .task-item{
   display:flex;align-items:center;justify-content:space-between;padding:12px 14px;
   border-radius:10px;border:0.5px solid ${bdr};margin-bottom:6px;background:${bg1};gap:12px;
@@ -145,10 +146,11 @@ function makeStyles(mode) {
 .task-meta{display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 .badge{font-size:11px;padding:3px 8px;border-radius:99px;border:0.5px solid ${bdr};color:${text2};background:${bg2};}
 .badge-coll{background:${chip};color:${chipT};border-color:${chipH};}
+.task-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
 .btn-schedule{
   font-size:12px;padding:6px 14px;border-radius:8px;border:0.5px solid ${ACCENT};
   color:${ACCENT};background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;
-  white-space:nowrap;flex-shrink:0;transition:background 0.15s,color 0.15s;
+  white-space:nowrap;transition:background 0.15s,color 0.15s;
 }
 .btn-schedule:hover{background:${ACCENT};color:#fff;}
 .empty-state{
@@ -161,10 +163,12 @@ function makeStyles(mode) {
 .stat-num{font-size:26px;font-weight:500;color:${text1};line-height:1.1;}
 .stat-lbl{font-size:11px;color:${text2};margin-top:2px;}
 .coll-card{
+  display:flex;align-items:center;gap:10px;
   background:${bg1};border:0.5px solid ${bdr};border-radius:12px;padding:12px 14px;
-  margin-bottom:8px;text-decoration:none;display:block;transition:border-color 0.15s,background 0.2s;
+  margin-bottom:8px;transition:border-color 0.15s,background 0.2s;
 }
 .coll-card:hover{border-color:${bdr2};}
+.coll-info{flex:1;min-width:0;}
 .coll-name{font-size:14px;font-weight:500;color:${text1};margin:0 0 2px;}
 .coll-desc{font-size:12px;color:${text2};margin:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .btn-add-coll{
@@ -178,11 +182,13 @@ function makeStyles(mode) {
   position:fixed;inset:0;background:${overlay};
   display:flex;align-items:center;justify-content:center;z-index:200;
 }
+  
 .modal-box{
   background:${bg1};border:0.5px solid ${bdr};border-radius:16px;
   padding:1.5rem;width:360px;max-width:92vw;
 }
-.modal-title{font-size:16px;font-weight:500;margin:0 0 1rem;color:${text1};}
+.modal-title{font-size:16px;font-weight:500;margin:0 0 0.5rem;color:${text1};}
+.modal-sub{font-size:14px;color:${text2};margin:0 0 1.25rem;line-height:1.6;}
 .field-label{font-size:12px;color:${text2};margin-bottom:5px;display:block;}
 .field-input{
   width:100%;background:${bg2};border:0.5px solid ${bdr};border-radius:10px;
@@ -200,6 +206,11 @@ function makeStyles(mode) {
   font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;
 }
 .btn-create:hover{opacity:0.88;}
+.btn-del-confirm{
+  padding:8px 18px;border-radius:8px;border:none;background:${delTxt};color:#fff;
+  font-family:'DM Sans',sans-serif;font-size:13px;font-weight:500;cursor:pointer;
+}
+.btn-del-confirm:hover{opacity:0.88;}
 `;
 }
 
@@ -217,22 +228,36 @@ const TODAY_STR = new Date().toLocaleDateString("en-US", {
   weekday: "long", month: "long", day: "numeric",
 });
 
-// ─── Main component ────────────────────────────────────────────────────────────
+function TrashIcon() {
+  return (
+    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6"/>
+      <path d="M19 6l-1 14H6L5 6"/>
+      <path d="M10 11v6M14 11v6"/>
+      <path d="M9 6V4h6v2"/>
+    </svg>
+  );
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate();
   const { user, logout } = useAuth();
 
-  // Sync with the same localStorage key used by AllTasks & Calendar
   const [mode, setMode] = useState(() => localStorage.getItem("theme-mode") || "light");
-
   const [collections, setCollections] = useState([]);
   const [sessions, setSessions] = useState([]);
   const [unscheduledTasks, setUnscheduledTasks] = useState([]);
   const [aiPrompt, setAiPrompt] = useState("");
-  const [modalOpen, setModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  // Create collection modal
+  const [modalOpen, setModalOpen] = useState(false);
   const [newCollName, setNewCollName] = useState("");
   const [newCollDesc, setNewCollDesc] = useState("");
+
+  // Confirm delete: { type: 'session'|'task'|'collection', id, label }
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   const theme  = useMemo(() => buildTheme(mode), [mode]);
   const styles = useMemo(() => makeStyles(mode), [mode]);
@@ -249,31 +274,21 @@ export default function Home() {
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : "U";
 
-  useEffect(() => {
-    // Only fetch if user is logged in
-    if (!user) return;
-    fetchData();
-  }, [user]); // user is the dep
+  // ── Fetch ──────────────────────────────────────────────────────────────────
+  useEffect(() => { fetchData(); }, []);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [colRes, sessRes, taskRes] = await Promise.all([
         api.get("/collections"),
-        api.get("/sessions"), // My newly modified session list
-        api.get("/tasks/user"), // Use correct endpoint for tasks
+        api.get("/sessions"),
+        api.get("/tasks"),
       ]);
-      setCollections(colRes.data || []);
-      
-      const allSessions = sessRes.data || [];
-      const upcomingSessions = allSessions.filter(s => new Date(s.endTime) > new Date());
-      setSessions(upcomingSessions.slice(0, 5));
-
-      const allTasks = taskRes.data || [];
-      const scheduledTaskIds = new Set(allSessions.map((s) => s.task?._id).filter(id => id));
-      const unscheduled = allTasks.filter((t) => !scheduledTaskIds.has(t._id));
-      
-      setUnscheduledTasks(unscheduled.slice(0, 5));
+      setCollections(colRes.data);
+      setSessions(sessRes.data.slice(0, 5));
+      const scheduledIds = new Set(sessRes.data.map((s) => s.task?._id));
+      setUnscheduledTasks(taskRes.data.filter((t) => !scheduledIds.has(t._id)).slice(0, 5));
     } catch (err) {
       console.error("Error fetching dashboard data:", err);
     } finally {
@@ -281,13 +296,51 @@ export default function Home() {
     }
   };
 
+  // ── Delete ─────────────────────────────────────────────────────────────────
+  const askDelete = (type, id, label) => setConfirmDelete({ type, id, label });
+
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
+    const { type, id } = confirmDelete;
+    try {
+      if (type === "session") {
+        await api.delete(`/sessions/${id}`);
+        setSessions((prev) => prev.filter((s) => s._id !== id));
+      } else if (type === "task") {
+        await api.delete(`/tasks/user`, { data: { _id: id } });
+        setUnscheduledTasks((prev) => prev.filter((t) => t._id !== id));
+      } else if (type === "collection") {
+        await api.delete(`/collections/${id}`);
+        setCollections((prev) => prev.filter((c) => c._id !== id));
+      }
+    } catch (err) {
+      console.error(`Delete ${type} error:`, err);
+      alert(`Failed to delete ${type}. Please try again.`);
+    } finally {
+      setConfirmDelete(null);
+    }
+  };
+
+  // ── Mark session done ──────────────────────────────────────────────────────
+  const handleMarkSessionDone = async (id) => {
+    try {
+      await api.put(`/sessions/${id}`, { status: "completed" });
+      setSessions((prev) =>
+        prev.map((s) => (s._id === id ? { ...s, status: "completed" } : s))
+      );
+    } catch (err) {
+      console.error("Mark done error:", err);
+    }
+  };
+
+  // ── AI Planner ─────────────────────────────────────────────────────────────
   const handleAiPlan = () => {
     if (!aiPrompt.trim()) return;
-    console.log("Sending prompt to AI:", aiPrompt);
     alert("AI Planning feature coming soon!");
     setAiPrompt("");
   };
 
+  // ── Create collection ──────────────────────────────────────────────────────
   const handleCreateCollection = async () => {
     if (!newCollName.trim()) return;
     try {
@@ -302,8 +355,7 @@ export default function Home() {
     }
   };
 
-  const handleMarkSessionDone = (id) => console.log("Mark session done:", id);
-
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -311,7 +363,7 @@ export default function Home() {
 
       <div className="dash-root">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="dash-header">
           <div>
             <p className="dash-greeting">
@@ -335,7 +387,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── AI Planner ── */}
+        {/* AI Planner */}
         <div className="ai-box">
           <p className="ai-label">AI Planner</p>
           <div className="ai-input-row">
@@ -355,7 +407,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── Main grid ── */}
+        {/* Main grid */}
         <div className="dash-grid">
 
           {/* Left column */}
@@ -378,12 +430,21 @@ export default function Home() {
                 <div className="time-sep" />
                 <div className="session-info">
                   <p className="session-title">{s.task?.title || "Untitled Task"}</p>
-                  <p className="session-sub">
-                    {s.task?.collectionId ? `Collection: ${s.task.collectionId}` : "No collection"}
-                  </p>
+                  
                 </div>
-                <button className="btn-done" onClick={() => handleMarkSessionDone(s._id)}>✓</button>
-                <button className="btn-edit-sm">Edit</button>
+                <div className="session-actions">
+                  <button
+                    className="btn-done"
+                    title="Mark done"
+                    style={s.status === "completed" ? { opacity: 0.4, cursor: "default" } : {}}
+                    onClick={() => s.status !== "completed" && handleMarkSessionDone(s._id)}
+                  >✓</button>
+                  <button
+                    className="btn-del-icon"
+                    title="Delete session"
+                    onClick={() => askDelete("session", s._id, s.task?.title || "this session")}
+                  ><TrashIcon /></button>
+                </div>
               </div>
             ))}
 
@@ -402,10 +463,16 @@ export default function Home() {
                   <p className="task-title">{t.title}</p>
                   <div className="task-meta">
                     <span className="badge">{t.estimation} min</span>
-                    {t.collectionId && <span className="badge badge-coll">{t.collectionId}</span>}
                   </div>
                 </div>
-                <button className="btn-schedule">Schedule</button>
+                <div className="task-actions">
+                  <button className="btn-schedule">Schedule</button>
+                  <button
+                    className="btn-del-icon"
+                    title="Delete task"
+                    onClick={() => askDelete("task", t._id, t.title)}
+                  ><TrashIcon /></button>
+                </div>
               </div>
             ))}
           </div>
@@ -414,10 +481,10 @@ export default function Home() {
           <div className="sidebar">
             <div className="stat-cards">
               {[
-                { num: sessions.length,       lbl: "Sessions today" },
-                { num: unscheduledTasks.length, lbl: "To schedule"   },
-                { num: collections.length,      lbl: "Collections"   },
-                { num: "—",                     lbl: "Week streak"   },
+                { num: sessions.length,         lbl: "Sessions today" },
+                { num: unscheduledTasks.length,  lbl: "To schedule"   },
+                { num: collections.length,       lbl: "Collections"   },
+                { num: "—",                      lbl: "Week streak"   },
               ].map(({ num, lbl }) => (
                 <div className="stat-card" key={lbl}>
                   <div className="stat-num">{num}</div>
@@ -431,10 +498,19 @@ export default function Home() {
             </div>
 
             {collections.map((c) => (
-              <Link className="coll-card" to={`/collections/${c._id}`} key={c._id}>
-                <p className="coll-name">{c.name}</p>
-                <p className="coll-desc">{c.description}</p>
-              </Link>
+              <div className="coll-card" key={c._id}>
+                <Link to={`/collections/${c._id}`} style={{ textDecoration: "none", flex: 1, minWidth: 0 }}>
+                  <div className="coll-info">
+                    <p className="coll-name">{c.name}</p>
+                    <p className="coll-desc">{c.description}</p>
+                  </div>
+                </Link>
+                <button
+                  className="btn-del-icon"
+                  title="Delete collection"
+                  onClick={() => askDelete("collection", c._id, c.name)}
+                ><TrashIcon /></button>
+              </div>
             ))}
 
             <button className="btn-add-coll" onClick={() => setModalOpen(true)}>
@@ -443,7 +519,7 @@ export default function Home() {
           </div>
         </div>
 
-        {/* ── Create Collection Modal ── */}
+        {/* Create Collection Modal */}
         {modalOpen && (
           <div className="modal-overlay" onClick={() => setModalOpen(false)}>
             <div className="modal-box" onClick={(e) => e.stopPropagation()}>
@@ -455,6 +531,7 @@ export default function Home() {
                 placeholder="e.g. University"
                 value={newCollName}
                 onChange={(e) => setNewCollName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleCreateCollection()}
               />
               <label className="field-label">Description</label>
               <input
@@ -466,6 +543,22 @@ export default function Home() {
               <div className="modal-actions">
                 <button className="btn-cancel" onClick={() => setModalOpen(false)}>Cancel</button>
                 <button className="btn-create" onClick={handleCreateCollection}>Create</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Confirm Delete Modal */}
+        {confirmDelete && (
+          <div className="modal-overlay" onClick={() => setConfirmDelete(null)}>
+            <div className="modal-box" onClick={(e) => e.stopPropagation()}>
+              <p className="modal-title">Delete {confirmDelete.type}?</p>
+              <p className="modal-sub">
+                <strong>"{confirmDelete.label}"</strong> will be permanently deleted. This cannot be undone.
+              </p>
+              <div className="modal-actions">
+                <button className="btn-cancel" onClick={() => setConfirmDelete(null)}>Cancel</button>
+                <button className="btn-del-confirm" onClick={confirmDeleteAction}>Delete</button>
               </div>
             </div>
           </div>

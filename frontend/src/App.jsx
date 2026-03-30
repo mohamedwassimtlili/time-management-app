@@ -8,6 +8,7 @@ import AllTasks from "./components/AllTasks";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import Home from "./components/Home"; // Add this line
+import ChatPage from "./components/ChatPage";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         { /* the old calendar view  */ }
         <Route path="/calendar-view" element={<ProtectedRoute><Calendar /></ProtectedRoute>} />
         <Route path="/collections/:collectionId" element={<ProtectedRoute><AllTasks/></ProtectedRoute>} /> {/* Add new route */}
+        <Route path="/chat" element={<ChatPage />} />
       </Routes>
     </Router>
     </AuthProvider>
