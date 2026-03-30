@@ -336,7 +336,7 @@ export default function Home() {
   // ── AI Planner ─────────────────────────────────────────────────────────────
   const handleAiPlan = () => {
     if (!aiPrompt.trim()) return;
-    alert("AI Planning feature coming soon!");
+    navigate("/ai/agent", { state: { prompt: aiPrompt } });
     setAiPrompt("");
   };
 
