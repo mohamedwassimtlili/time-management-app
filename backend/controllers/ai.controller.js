@@ -8,7 +8,7 @@ import {
 import Redis from "ioredis";
 import axios from "axios";
 const redis = new Redis();
-const FASTAPI_URL = "http://127.0.0.1:8000";
+const FASTAPI_URL = process.env.FASTAPI_URL || "http://127.0.0.1:8000";
 // Start plan
 
 export const getIntent = async (req,res) => {
@@ -63,9 +63,16 @@ export const continuePlan = async (req, res) => {
     const memoryKey = `ai-session:${userId}`;
 
     // Step 1: detect intent first
-    const intentResponse = await axios.post(`${FASTAPI_URL}/plan/intent`, {
-      prompt: req.body.prompt,
-    });
+    let intentResponse;
+    try {
+      intentResponse = await axios.post(`${FASTAPI_URL}/plan/intent`, {
+        prompt: req.body.prompt,
+      });
+    } catch (err) {
+      console.error("handlePrompt: failed to call FASTAPI /plan/intent:", err.message || err);
+      return res.status(502).json({ error: "AI backend unreachable", detail: err.message || String(err) });
+    }
+
     const { intent, start_date, end_date } = intentResponse.data;
     console.log(intent, start_date, end_date)
     console.log("**************************************************************************")

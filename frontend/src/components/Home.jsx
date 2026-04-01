@@ -336,7 +336,7 @@ export default function Home() {
   // ── AI Planner ─────────────────────────────────────────────────────────────
   const handleAiPlan = () => {
     if (!aiPrompt.trim()) return;
-    navigate("/ai/agent", { state: { prompt: aiPrompt } });
+    navigate("/chat", { state: { prompt: aiPrompt } });
     setAiPrompt("");
   };
 

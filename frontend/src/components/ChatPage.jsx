@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { ThemeProvider, createTheme, CssBaseline } from "@mui/material";
 import { useAuth } from "../context/AuthContext";
+import { api } from "../services/api";
 
 // ─── Constants ─────────────────────────────────────────────────────────────────
 const ACCENT = "#534AB7";
@@ -299,23 +300,13 @@ export default function ChatPage() {
         content: m.content,
       }));
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: `You are a smart productivity and planning assistant built into a task management dashboard.
-You help users plan their work, schedule tasks, manage collections, and stay productive.
-The user's name is ${user?.name || "there"}. Be concise, friendly, and actionable.`,
-          messages: history,
-        }),
-      });
+      // Send prompt to backend AI endpoint. `api` adds the Authorization header.
+      const payload = { prompt: trimmed };
+      const resp = await api.post("/ai/agent", payload);
+      const data = resp.data || {};
 
-      const data = await res.json();
-      const reply =
-        data.content?.find((b) => b.type === "text")?.text ||
-        "Sorry, I couldn't generate a response.";
+      // Prefer explanation/answer/message fields returned by backend
+      const reply = data.explanation || data.answer || data.message || JSON.stringify(data);
 
       setMessages((prev) => [...prev, { role: "assistant", content: reply, time: new Date() }]);
     } catch (err) {
