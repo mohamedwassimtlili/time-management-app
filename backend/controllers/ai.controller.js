@@ -7,7 +7,18 @@ import {
 } from "../services/ai.service.js";
 import Redis from "ioredis";
 import axios from "axios";
-const redis = new Redis();
+const redis = new Redis({
+  host: process.env.REDIS_HOST || "127.0.0.1",
+  port: process.env.REDIS_PORT || 6379,
+  maxRetriesPerRequest: 20,
+  enableReadyCheck: true,
+  retryStrategy: (times) => {
+    if (times > 20) {
+      return null; // stop retrying
+    }
+    return Math.min(times * 50, 2000); // exponential backoff
+  },
+});
 const FASTAPI_URL = process.env.FASTAPI_URL || "http://127.0.0.1:8000";
 // Start plan
 
