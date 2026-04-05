@@ -26,6 +26,11 @@ export function AuthProvider({ children }) {
         setUser(res.data); // axios puts JSON in res.data
       } catch (error) {
         setUser(null);
+        if (error.response?.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem("token");
+          setToken(null);
+        }
       } finally {
         setLoading(false);
       }

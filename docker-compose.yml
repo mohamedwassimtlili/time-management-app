@@ -1,21 +1,53 @@
-version: "3.8"
+version: "3.9"
 
 services:
-  backend:
-    build: ./backend
+  redis:
+    image: redis:7-alpine
+    container_name: redis
     ports:
-      - "5000:5000"
-    env_file:
-      - ./backend/.env
-    environment:
-      - NODE_ENV=development
+      - "6379:6379"   # optional if you want host access
+    volumes:
+      - redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+    networks:
+      - app-network
 
-  frontend:
-    build: ./frontend
-    ports:
-      - "3000:80"
-    depends_on:
-      - backend
+  fastapi:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    container_name: fastapi
     environment:
-      - VITE_API_URL=http://backend:5000
-      
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+      - FASTAPI_URL=http://fastapi:8000
+    networks:
+      - app-network
+    depends_on:
+      - redis
+
+  express:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: express
+    ports:
+      - "5000:5000"  # frontend communicates with this
+    environment:
+      - FASTAPI_URL=http://fastapi:8000
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=
+    networks:
+      - app-network
+    depends_on:
+      - fastapi
+      - redis
+
+volumes:
+  redis-data:
+
+networks:
+  app-network:
+    driver: bridge

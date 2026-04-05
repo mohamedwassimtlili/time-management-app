@@ -1,21 +1,9 @@
 import axios from "axios";
 import Session from "../models/session.model.js";
 const FASTAPI_URL = "http://127.0.0.1:8000";
-import Redis from "ioredis";
-const redis = new Redis({
-  host: process.env.REDIS_HOST || "127.0.0.1",
-  port: process.env.REDIS_PORT || 6379,
-  maxRetriesPerRequest: 20,
-  enableReadyCheck: true,
-  retryStrategy: (times) => {
-    if (times > 20) {
-      return null; // stop retrying
-    }
-    return Math.min(times * 50, 2000); // exponential backoff
-  },
-});
+import redis from "../utils/redis.client.js";
 
-// Start plan
+  // Start plan
 export const startPlanService = async (tasks, project) => {
   const response = await axios.post(`${FASTAPI_URL}/plan/start`, {
     tasks,

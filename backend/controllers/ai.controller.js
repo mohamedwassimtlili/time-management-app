@@ -5,23 +5,9 @@ import {
   getMemory,
   deleteMemory
 } from "../services/ai.service.js";
-import Redis from "ioredis";
+import redis from "../utils/redis.client.js"; // use the one with host/port set
 import axios from "axios";
-const redis = new Redis({
-  host: process.env.REDIS_HOST || "127.0.0.1",
-  port: process.env.REDIS_PORT || 6379,
-  maxRetriesPerRequest: 20,
-  enableReadyCheck: true,
-  retryStrategy: (times) => {
-    if (times > 20) {
-      return null; // stop retrying
-    }
-    return Math.min(times * 50, 2000); // exponential backoff
-  },
-});
-const FASTAPI_URL = process.env.FASTAPI_URL || "http://127.0.0.1:8000";
-// Start plan
-
+const FASTAPI_URL = process.env.FASTAPI_URL; // points to FastAPI container
 export const getIntent = async (req,res) => {
   
 }
@@ -183,7 +169,19 @@ export const handlePrompt = async (req, res) => {
     const saveConversationTurn = async (userMsg, assistantMsg) => {
       conversationHistory.push({ role: "user", content: userMsg });
       conversationHistory.push({ role: "assistant", content: assistantMsg });
-      await redis.set(conversationKey, JSON.stringify(conversationHistory), "EX", 60 * 60 * 24);
+      try {
+        await redis.set(conversationKey, JSON.stringify(conversationHistory), "EX", 60 * 60 * 24);
+      } catch (err) {
+        if (err.message && err.message.includes("maxRetriesPerRequest")) {
+          // Keep only the most recent 6 messages to avoid the payload being too large
+          if (conversationHistory.length > 6) {
+            conversationHistory = conversationHistory.slice(-6);
+          }
+          await redis.set(conversationKey, JSON.stringify(conversationHistory), "EX", 60 * 60 * 24);
+        } else {
+          throw err;
+        }
+      }
     };
 
     const savePlan = async (tasks, sessions) => {
@@ -251,6 +249,16 @@ User: ${req.body.prompt}
 
 case "general_question": {
   // Only needs conversation history — no plan data
+
+  // Slice history if it exceeds 20 messages, and notify FastAPI
+  if (conversationHistory.length > 20) {
+    conversationHistory = conversationHistory.slice(-20);
+    await redis.set(conversationKey, JSON.stringify(conversationHistory), "EX", 60 * 60 * 24);
+    await axios.post(`${FASTAPI_URL}/test-ai-token`, {
+      history: conversationHistory,
+    });
+  }
+
   const recentHistory = conversationHistory
     .slice(-6)
     .map(turn => ({
@@ -259,26 +267,20 @@ case "general_question": {
         ? turn.content.slice(0, 150) + (turn.content.length > 150 ? "..." : "")
         : turn.content
     }));
-
   const contextBlock = recentHistory
     .map(turn => `${turn.role === "user" ? "User" : "Assistant"}: ${turn.content}`)
     .join("\n");
-
   const fullPrompt = `
 ${contextBlock}
-
 User: ${req.body.prompt}
   `.trim();
-
   const response = await axios.post(`${FASTAPI_URL}/plan/handle`, {
     prompt: fullPrompt,
   });
-
   await saveConversationTurn(
     req.body.prompt,
     (response.data.answer || response.data.message || "").slice(0, 200)
   );
-
   return res.json({ intent: "general_question", ...response.data });
 }
       default:
@@ -286,6 +288,19 @@ User: ${req.body.prompt}
     }
 
   } catch (err) {
+    if (err.message && err.message.includes("maxRetriesPerRequest")) {
+      const userId = req.user?.userId;
+      if (userId) {
+        const conversationKey = `conversation:${userId}`;
+        const planKey = `plan:${userId}`;
+        // The user has hit the Redis memory/timeout limit, clear old conversation history
+        try {
+          await redis.del(conversationKey);
+        } catch(e) {}
+        
+        return res.status(500).json({ error: "Memory limit reached. Old messages cleared. Please try again." });
+      }
+    }
     res.status(500).json({ error: err.message });
   }
 };

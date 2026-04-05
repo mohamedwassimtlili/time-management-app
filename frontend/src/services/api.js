@@ -17,3 +17,17 @@ api.interceptors.request.use(
     return Promise.reject(error);
   }
 );
+
+// Add a response interceptor to handle token expiry globally
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      if (localStorage.getItem("token")) {
+        localStorage.removeItem("token");
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
