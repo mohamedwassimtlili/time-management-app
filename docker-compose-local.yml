@@ -1,18 +1,21 @@
-version: "3.4"
+version: "3.9"
 
 services:
   redis:
     image: redis:7-alpine
     container_name: redis
+    ports:
+      - "6379:6379"   # optional if you want host access
     volumes:
       - redis-data:/data
     command: ["redis-server", "--appendonly", "yes"]
     networks:
       - app-network
-    restart: unless-stopped
 
   fastapi:
-    image: mohamedwassim123564/time-management-fastapi:latest
+    build:
+      context: ./api
+      dockerfile: Dockerfile
     container_name: fastapi
     environment:
       - REDIS_HOST=redis
@@ -23,13 +26,14 @@ services:
       - app-network
     depends_on:
       - redis
-    restart: unless-stopped
 
   express:
-    image: mohamedwassim123564/time-management-express:latest
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
     container_name: express
     ports:
-      - "5000:5000"
+      - "5000:5000"  # frontend communicates with this
     environment:
       - FASTAPI_URL=http://fastapi:8000
       - REDIS_HOST=redis
@@ -40,7 +44,6 @@ services:
     depends_on:
       - fastapi
       - redis
-    restart: unless-stopped
 
 volumes:
   redis-data:
