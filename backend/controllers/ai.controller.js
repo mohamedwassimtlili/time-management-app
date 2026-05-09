@@ -1,14 +1,12 @@
 import {
+
   getSchedule,
   getChat,
   getMemory,
-  deleteMemory,
+  deleteMemory
 } from "../services/ai.service.js";
 import redis from "../utils/memory.client.js"; // use the one with host/port set
 import axios from "axios";
-import Task from "../models/task.model.js";
-import Session from "../models/session.model.js";
-
 const FASTAPI_URL = process.env.FASTAPI_URL || "http://127.0.0.1:8000";
 export const getIntent = async (req,res) => {
   
@@ -169,18 +167,22 @@ export const handlePrompt = async (req, res) => {
 
     // ─── Helpers ───────────────────────────────────────────────────────────────
     const saveConversationTurn = async (userMsg, assistantMsg) => {
+      // Ensure we don't store too much in memory
+      if (conversationHistory.length > 20) {
+        conversationHistory = conversationHistory.slice(-10);
+      }
       conversationHistory.push({ role: "user", content: userMsg });
       conversationHistory.push({ role: "assistant", content: assistantMsg });
-      
-      // ✅ Keep only the last 3 turns (6 messages: 3 users + 3 assistants)
-      if (conversationHistory.length > 6) {
-        conversationHistory = conversationHistory.slice(-6);
-      }
-
       try {
-        await redis.set(conversationKey, JSON.stringify(conversationHistory), "EX", 60 * 60 * 2); // Reduced TTL to 2h
+        await redis.set(conversationKey, JSON.stringify(conversationHistory), "EX", 60 * 60 * 24);
       } catch (err) {
-        console.error("Memory Save Error:", err);
+        // Fallback for memory issues
+        if (conversationHistory.length > 4) {
+          conversationHistory = conversationHistory.slice(-4);
+          await redis.set(conversationKey, JSON.stringify(conversationHistory), "EX", 60 * 60 * 24);
+        } else {
+          throw err;
+        }
       }
     };
 
@@ -250,59 +252,31 @@ User: ${req.body.prompt}
 case "general_question": {
   // Only needs conversation history — no plan data
 
-  // User already limited history in saveConversationTurn to last 6 messages (3 turns)
-  const recentHistory = conversationHistory.map(turn => ({
-      role: turn.role,
-      content: turn.role === "assistant"
-        ? turn.content.slice(0, 200) + (turn.content.length > 200 ? "..." : "")
-        : turn.content
-    }));
+  // PRE-EMPTIVE SLICE: Ensure history passed to prompt isn't too huge
+  const trimmedHistory = conversationHistory.slice(-6).map(turn => ({
+    role: turn.role,
+    content: turn.content.length > 200 ? turn.content.slice(0, 200) + "..." : turn.content
+  }));
 
-  const contextBlock = recentHistory
+  const contextBlock = trimmedHistory
     .map(turn => `${turn.role === "user" ? "User" : "Assistant"}: ${turn.content}`)
     .join("\n");
+
   const fullPrompt = `
 ${contextBlock}
 User: ${req.body.prompt}
   `.trim();
+
   const response = await axios.post(`${FASTAPI_URL}/plan/handle`, {
     prompt: fullPrompt,
   });
+
   await saveConversationTurn(
     req.body.prompt,
     (response.data.answer || response.data.message || "").slice(0, 300)
   );
   return res.json({ intent: "general_question", ...response.data });
 }
-
-      case "extract_instance": {
-        const response = await axios.post(`${FASTAPI_URL}/plan/extract`, {
-          prompt: req.body.prompt,
-        });
-
-        const { type, data } = response.data;
-        let created;
-        let message;
-
-        if (type === "task") {
-          created = new Task({ ...data, user: userId });
-          await created.save();
-          message = `Task created: ${data.title}`;
-        } else if (type === "session") {
-          created = new Session({ ...data, user: userId });
-          await created.save();
-          message = `Session scheduled: ${data.title}`;
-        } else {
-          return res.json({
-            intent: "extract_instance",
-            message: "I found some info but couldn't create it. " + (response.data.error || ""),
-          });
-        }
-
-        await saveConversationTurn(req.body.prompt, message);
-        return res.json({ intent: "extract_instance", message, data: created });
-      }
-
       default:
         return res.json({ intent: "unknown", message: "Could not understand your request." });
     }
@@ -312,6 +286,7 @@ User: ${req.body.prompt}
       const userId = req.user?.userId;
       if (userId) {
         const conversationKey = `conversation:${userId}`;
+        const planKey = `plan:${userId}`;
         // The user has hit the Redis memory/timeout limit, clear old conversation history
         try {
           await redis.del(conversationKey);
