@@ -53,5 +53,6 @@ EXAMPLES:
 - "how many messages did we exchange?"             → general_question
 
 Respond ONLY with a valid JSON object in this exact format, no explanation, no markdown:
-"intent": "<intent>", "confidence": <0.0-1.0>, "reason": "<one short sentence>", "start_date": "<YYYY-MM-DD or null>", "end_date": "<YYYY-MM-DD or null>"
+{{"intent": "<intent>", "confidence": <0.0-1.0>, "reason": "<one short sentence>", "start_date": "<YYYY-MM-DD or null>", "end_date": "<YYYY-MM-DD or null>"}}
 """
+
