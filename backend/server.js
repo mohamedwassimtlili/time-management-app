@@ -17,7 +17,11 @@ const app = express();
 const PORT = process.env.PORT || 5000;  // use Render's assigned port
 
 app.use(cors({
-  origin: ["https://time-management-app-pi.vercel.app", "http://localhost:5173"],
+  origin: [
+    "https://time-management-88h6ijue5-mohamed-wassim-tlilis-projects.vercel.app",
+    "https://time-management-app-pi.vercel.app",
+    "http://localhost:5173"
+  ],
   credentials: true
 }));
 app.use(express.json()); // Allows parsing JSON in request body
